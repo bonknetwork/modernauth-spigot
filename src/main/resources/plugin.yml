@@ -1,0 +1,6 @@
+name: ModernAuthentication
+version: '1.0'
+main: org.bonkmc.modernAuthentication.ModernAuthentication
+api-version: '1.21'
+authors: [ Pyro ]
+website: https://discord.gg/bonknetwork
