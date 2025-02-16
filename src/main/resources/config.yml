@@ -1,0 +1,8 @@
+# The number of seconds a player has to authenticate after joining.
+authTimeout: 150
+
+# The URL of your authentication backend.
+backendUrl: "http://10.1.1.231"
+
+# The port on which your backend is running.
+backendPort: 3000

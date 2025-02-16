@@ -2,64 +2,54 @@ package org.bonkmc.modernAuthentication;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 public final class ModernAuthentication extends JavaPlugin {
 
-    private Connection connection;
+    private int authTimeout;
+    private String backendUrl;
+    private int backendPort;
+    private AuthListener authListener; // Store the instance
 
     @Override
     public void onEnable() {
-        // Initialize the plugin's SQLite database.
-        initDatabase();
+        saveDefaultConfig();
+        loadConfiguration();
 
-        // Register the player join listener.
-        getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+        // Create and register your AuthListener, then store the instance.
+        authListener = new AuthListener(this);
+        getServer().getPluginManager().registerEvents(authListener, this);
 
-        // Schedule a repeating task (every 10 seconds) to poll the Python API for login status.
-        new AuthCheckTask(this).runTaskTimer(this, 20L, 200L);
+        // Register reload command
+        getCommand("authreload").setExecutor(new ReloadCommand(this));
     }
 
     @Override
     public void onDisable() {
-        // Close the database connection if open.
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
+        // Optionally cancel any pending tasks.
     }
 
-    public Connection getConnection() {
-        return connection;
+    public void loadConfiguration() {
+        authTimeout = getConfig().getInt("authTimeout", 60);
+        backendUrl = getConfig().getString("backendUrl", "http://127.0.0.1");
+        backendPort = getConfig().getInt("backendPort", 3000);
+        getLogger().info("Configuration loaded: authTimeout=" + authTimeout +
+                ", backendUrl=" + backendUrl +
+                ", backendPort=" + backendPort);
     }
 
-    private void initDatabase() {
-        try {
-            File dataFolder = getDataFolder();
-            if (!dataFolder.exists()) {
-                dataFolder.mkdirs();
-            }
-            File dbFile = new File(dataFolder, "auth.db");
-            String url = "jdbc:sqlite:" + dbFile.getAbsolutePath();
-            connection = DriverManager.getConnection(url);
+    public int getAuthTimeout() {
+        return authTimeout;
+    }
 
-            Statement stmt = connection.createStatement();
-            // Create a table for storing player tokens and login status.
-            stmt.execute("CREATE TABLE IF NOT EXISTS players ("
-                    + "uuid TEXT PRIMARY KEY, "
-                    + "token TEXT, "
-                    + "authenticated INTEGER DEFAULT 0"
-                    + ")");
-            stmt.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    public String getBackendUrl() {
+        return backendUrl;
+    }
+
+    public int getBackendPort() {
+        return backendPort;
+    }
+
+    // Provide a getter for AuthListener
+    public AuthListener getAuthListener() {
+        return authListener;
     }
 }

@@ -4,3 +4,8 @@ main: org.bonkmc.modernAuthentication.ModernAuthentication
 api-version: '1.21'
 authors: [ Pyro ]
 website: https://discord.gg/bonknetwork
+commands:
+  authreload:
+    description: Reloads the ModernAuthentication configuration.
+    usage: /authreload
+depend: [nLogin]  # Ensures nLogin loads before your plugin
