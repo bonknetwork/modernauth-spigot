@@ -4,40 +4,36 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ModernAuthentication extends JavaPlugin {
 
-    private int authTimeout;
     private String backendUrl;
     private int backendPort;
-    private AuthListener authListener; // Store the instance
+    private String accessCode;
+    // The public server ID used in the link sent to players.
+    private static final String SERVER_ID = "bonk-network";
+    private AuthListener authListener;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         loadConfiguration();
 
-        // Create and register your AuthListener, then store the instance.
         authListener = new AuthListener(this);
         getServer().getPluginManager().registerEvents(authListener, this);
 
-        // Register reload command
         getCommand("authreload").setExecutor(new ReloadCommand(this));
     }
 
     @Override
     public void onDisable() {
-        // Optionally cancel any pending tasks.
+        // Optional cleanup.
     }
 
     public void loadConfiguration() {
-        authTimeout = getConfig().getInt("authTimeout", 60);
         backendUrl = getConfig().getString("backendUrl", "http://127.0.0.1");
         backendPort = getConfig().getInt("backendPort", 3000);
-        getLogger().info("Configuration loaded: authTimeout=" + authTimeout +
-                ", backendUrl=" + backendUrl +
-                ", backendPort=" + backendPort);
-    }
-
-    public int getAuthTimeout() {
-        return authTimeout;
+        accessCode = getConfig().getString("access-code", "");
+        getLogger().info("Configuration loaded: backendUrl=" + backendUrl +
+                ", backendPort=" + backendPort +
+                ", accessCode=" + accessCode);
     }
 
     public String getBackendUrl() {
@@ -48,7 +44,14 @@ public final class ModernAuthentication extends JavaPlugin {
         return backendPort;
     }
 
-    // Provide a getter for AuthListener
+    public String getAccessCode() {
+        return accessCode;
+    }
+
+    public String getServerId() {
+        return SERVER_ID;
+    }
+
     public AuthListener getAuthListener() {
         return authListener;
     }
