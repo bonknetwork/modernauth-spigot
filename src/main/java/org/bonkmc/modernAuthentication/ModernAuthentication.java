@@ -7,8 +7,7 @@ public final class ModernAuthentication extends JavaPlugin {
     private String backendUrl;
     private int backendPort;
     private String accessCode;
-    // The public server ID used in the link sent to players.
-    private static final String SERVER_ID = "bonk-network";
+    private String serverId; // Now loaded from config
     private AuthListener authListener;
 
     @Override
@@ -31,9 +30,11 @@ public final class ModernAuthentication extends JavaPlugin {
         backendUrl = getConfig().getString("backendUrl", "http://127.0.0.1");
         backendPort = getConfig().getInt("backendPort", 3000);
         accessCode = getConfig().getString("access-code", "");
+        serverId = getConfig().getString("server-id", "bonk-network");
         getLogger().info("Configuration loaded: backendUrl=" + backendUrl +
                 ", backendPort=" + backendPort +
-                ", accessCode=" + accessCode);
+                ", accessCode=" + accessCode +
+                ", serverId=" + serverId);
     }
 
     public String getBackendUrl() {
@@ -49,7 +50,7 @@ public final class ModernAuthentication extends JavaPlugin {
     }
 
     public String getServerId() {
-        return SERVER_ID;
+        return serverId;
     }
 
     public AuthListener getAuthListener() {

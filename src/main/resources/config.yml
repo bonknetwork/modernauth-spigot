@@ -6,3 +6,6 @@ backendPort: 3000
 
 # The access code used when communicating with the backend API.
 access-code: "your_access_code_here"
+
+# The public server ID used in the link sent to players.
+server-id: "server-id-here"
