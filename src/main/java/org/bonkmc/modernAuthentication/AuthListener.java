@@ -43,11 +43,6 @@ public class AuthListener implements Listener {
         String authUrl = plugin.getBackendUrl() + ":" + plugin.getBackendPort() +
                 "/auth/" + plugin.getServerId() + "/" + token +
                 "?username=" + player.getName();
-        // Optionally include the access code in the link if needed.
-        String accessCode = plugin.getAccessCode();
-        if (!accessCode.isEmpty()) {
-            authUrl += "&access_code=" + accessCode;
-        }
 
         // Create and send a clickable message.
         TextComponent clickableMessage = new TextComponent("§aClick here to authenticate");

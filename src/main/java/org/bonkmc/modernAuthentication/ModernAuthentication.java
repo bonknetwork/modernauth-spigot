@@ -7,7 +7,7 @@ public final class ModernAuthentication extends JavaPlugin {
     private String backendUrl;
     private int backendPort;
     private String accessCode;
-    private String serverId; // Now loaded from config
+    private String serverId; // Loaded from config
     private AuthListener authListener;
 
     @Override

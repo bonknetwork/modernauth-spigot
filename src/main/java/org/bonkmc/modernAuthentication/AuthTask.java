@@ -44,13 +44,13 @@ public class AuthTask implements Runnable {
 
             int responseCode = connection.getResponseCode();
             if (responseCode == 200) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 StringBuilder responseContent = new StringBuilder();
-                String inputLine;
-                while ((inputLine = in.readLine()) != null) {
-                    responseContent.append(inputLine);
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    String inputLine;
+                    while ((inputLine = in.readLine()) != null) {
+                        responseContent.append(inputLine);
+                    }
                 }
-                in.close();
 
                 if (responseContent.toString().contains("\"logged_in\":true")) {
                     Bukkit.getScheduler().runTask(plugin, () -> {
@@ -71,8 +71,6 @@ public class AuthTask implements Runnable {
     }
 
     private void cancelTask() {
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            authListener.cancelAuthTask(player.getUniqueId());
-        });
+        Bukkit.getScheduler().runTask(plugin, () -> authListener.cancelAuthTask(player.getUniqueId()));
     }
 }
