@@ -8,4 +8,7 @@ commands:
   authreload:
     description: Reloads the ModernAuthentication configuration.
     usage: /authreload
+  modernconfirm:
+    description: Confirms whether to switch to the new ModernAuth system.
+    usage: /modernconfirm <yes|no>
 depend: [nLogin]  # Ensures nLogin loads before your plugin

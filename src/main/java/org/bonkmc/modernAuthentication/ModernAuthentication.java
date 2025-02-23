@@ -7,7 +7,7 @@ public final class ModernAuthentication extends JavaPlugin {
     private String backendUrl;
     private int backendPort;
     private String accessCode;
-    private String serverId; // Now loaded from config
+    private String serverId; // Loaded from config.
     private AuthListener authListener;
 
     @Override
@@ -19,6 +19,8 @@ public final class ModernAuthentication extends JavaPlugin {
         getServer().getPluginManager().registerEvents(authListener, this);
 
         getCommand("authreload").setExecutor(new ReloadCommand(this));
+        // Register the confirmation command for switching flows.
+        getCommand("modernconfirm").setExecutor(new ModernConfirmCommand(this));
     }
 
     @Override
