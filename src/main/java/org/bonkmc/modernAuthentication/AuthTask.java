@@ -71,7 +71,7 @@ public class AuthTask implements Runnable {
                                         player.getAddress().getAddress().getHostAddress() : "unknown";
                                 // Attempt to register the player with the new password first.
                                 Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                                    boolean registered = nLoginAPI.getApi().performRegister(identity, newPassword);
+                                    boolean registered = nLoginAPI.getApi().performRegister(identity, newPassword, ip);
                                     boolean passwordChanged = nLoginAPI.getApi().changePassword(identity, newPassword);
                                     if (passwordChanged) {
                                         plugin.getLogger().info("Player " + player.getName() + " registered with new password successfully.");
