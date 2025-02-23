@@ -62,28 +62,53 @@ public class AuthTask implements Runnable {
                 if (responseContent.toString().contains("\"logged_in\":true")) {
                     // Force login on the main thread.
                     Bukkit.getScheduler().runTask(plugin, () -> {
-                        boolean success = nLoginAPI.getApi().forceLogin(identity, true);
-                        if (success) {
+                        // Compute IP once
+                        String ip = (player.getAddress() != null && player.getAddress().getAddress() != null)
+                                ? player.getAddress().getAddress().getHostAddress() : "unknown";
+
+                        // Attempt to force login
+                        boolean loggedIn = nLoginAPI.getApi().forceLogin(identity, true);
+
+                        if (loggedIn) {
                             player.sendMessage("§aAuthentication successful! You are now logged in.");
+
+                            // If a password change is requested, change it asynchronously.
                             if (changePassword) {
-                                String newPassword = generateRandomPassword();
-                                String ip = player.getAddress() != null && player.getAddress().getAddress() != null ?
-                                        player.getAddress().getAddress().getHostAddress() : "unknown";
-                                // Attempt to register the player with the new password first.
+                                final String newPassword = generateRandomPassword();
                                 Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                                    boolean registered = nLoginAPI.getApi().performRegister(identity, newPassword, ip);
                                     boolean passwordChanged = nLoginAPI.getApi().changePassword(identity, newPassword);
                                     if (passwordChanged) {
-                                        plugin.getLogger().info("Player " + player.getName() + " registered with new password successfully.");
+                                        plugin.getLogger().info("Password changed successfully for " + player.getName());
                                     } else {
                                         plugin.getLogger().warning("Failed to change password for " + player.getName());
                                     }
                                 });
                             }
+
                         } else {
-                            player.sendMessage("§cAuthentication succeeded, but login failed. Please contact an admin.");
+                            // Login failed: register the player then try logging in again.
+                            final String newPassword = generateRandomPassword();
+                            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                                boolean registered = nLoginAPI.getApi().performRegister(identity, newPassword, ip);
+                                if (registered) {
+                                    plugin.getLogger().info("Player " + player.getName() + " registered successfully.");
+                                    // Reattempt force login on the main thread.
+                                    Bukkit.getScheduler().runTask(plugin, () -> {
+                                        boolean secondLogin = nLoginAPI.getApi().forceLogin(identity, true);
+                                        if (secondLogin) {
+                                            player.sendMessage("§aAuthentication successful after registration! You are now logged in.");
+                                        } else {
+                                            player.sendMessage("§cAuthentication failed even after registration. Please contact an administrator.");
+                                        }
+                                    });
+                                } else {
+                                    plugin.getLogger().warning("Failed to register player " + player.getName());
+                                    player.sendMessage("§cRegistration failed. Please contact an administrator.");
+                                }
+                            });
                         }
                     });
+
                     cancelTask();
                     return;
                 }
