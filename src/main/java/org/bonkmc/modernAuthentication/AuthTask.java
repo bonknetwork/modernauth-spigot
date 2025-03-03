@@ -62,11 +62,11 @@ public class AuthTask implements Runnable {
                 if (responseContent.toString().contains("\"logged_in\":true")) {
                     // Force login on the main thread.
                     Bukkit.getScheduler().runTask(plugin, () -> {
-                        // Compute IP once
+                        // Compute IP once.
                         String ip = (player.getAddress() != null && player.getAddress().getAddress() != null)
                                 ? player.getAddress().getAddress().getHostAddress() : "unknown";
 
-                        // Attempt to force login
+                        // Attempt to force login.
                         boolean loggedIn = nLoginAPI.getApi().forceLogin(identity, true);
 
                         if (loggedIn) {
