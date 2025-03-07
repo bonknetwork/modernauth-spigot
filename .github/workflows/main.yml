@@ -34,7 +34,7 @@ jobs:
 
       # Build the project. Adjust this step if you use Gradle or another build tool.
       - name: Build project with Maven
-        run: mvn clean install
+        run: gradle build
 
       # Create a GitHub release using an action.
       - name: Create Release
