@@ -1,0 +1,46 @@
+name: Manual Merge, Build and Release
+
+on:
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  merge_build_release:
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the master branch with full history to allow merging.
+      - name: Check out master branch
+        uses: actions/checkout@v2
+        with:
+          ref: master
+          fetch-depth: 0
+
+      # Configure git user settings.
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      # Fetch the dev branch and merge it into master.
+      - name: Merge dev into master
+        run: |
+          git fetch origin dev
+          git merge origin/dev --no-ff --commit -m "Merge branch 'dev' into master"
+
+      # Push the merge commit back to master.
+      - name: Push changes to master
+        run: git push origin master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build the project. Adjust this step if you use Gradle or another build tool.
+      - name: Build project with Maven
+        run: mvn clean install
+
+      # Create a GitHub release using an action.
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v1.0.${{ github.run_number }}
+          name: Release v1.0.${{ github.run_number }}
+          body: "Automated release created after merging dev into master and building the project."
