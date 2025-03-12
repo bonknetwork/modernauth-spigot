@@ -1,5 +1,7 @@
-# THIS PLUGIN USES THE nLogin API! You MUST have nLogin installed on your SPIGOT server for this to work!
-Velocity is coming soon!
+# Important Notes
+- THIS PLUGIN USES THE nLogin API! You MUST have nLogin installed on your SPIGOT server for this to work!
+- This plugin will not work without an access code and is for now invite only. I'll work on making this public soon, but for now dm @pyroedged on discord for access on release.
+- Velocity is coming soon!
 
 # Our Mission with ModernAuth
 ModernAuth's goal is to simplify and revolutionize authentication on offline-mode (cracked) Minecraft servers. By automating password resets and reducing the need for human intervention, we strive to create a more secure, user-friendly environment for both players and server administrators.
