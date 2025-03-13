@@ -6,7 +6,7 @@ on:
       release_version:
         description: 'Release version (e.g. v1.0.123)'
         required: true
-        default: 'v1.0.${{ github.run_number }}'
+        default: 'v1.0.0'
       release_body:
         description: 'Release description'
         required: false
