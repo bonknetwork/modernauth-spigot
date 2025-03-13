@@ -29,8 +29,8 @@ public final class ModernAuthentication extends JavaPlugin {
     }
 
     public void loadConfiguration() {
-        backendUrl = getConfig().getString("backendUrl", "http://127.0.0.1");
-        backendPort = getConfig().getInt("backendPort", 3000);
+        backendUrl = getConfig().getString("backendUrl", "https://auth.bonkmc.org");
+        backendPort = getConfig().getInt("backendPort", 8080);
         accessCode = getConfig().getString("access-code", "");
         serverId = getConfig().getString("server-id", "bonk-network");
         getLogger().info("Configuration loaded: backendUrl=" + backendUrl +
@@ -57,5 +57,10 @@ public final class ModernAuthentication extends JavaPlugin {
 
     public AuthListener getAuthListener() {
         return authListener;
+    }
+
+    // New helper method to load a message from the config.
+    public String getMessage(String key) {
+        return getConfig().getString("messages." + key);
     }
 }

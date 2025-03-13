@@ -16,12 +16,12 @@ public class ModernConfirmCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("Only players can use this command.");
+            sender.sendMessage(plugin.getMessage("notPlayer"));
             return true;
         }
         Player player = (Player) sender;
         if (args.length == 0) {
-            player.sendMessage("§ePlease type /modernconfirm <yes|no>");
+            player.sendMessage(plugin.getMessage("confirmUsage"));
             return true;
         }
         String response = args[0].toLowerCase();
@@ -29,9 +29,9 @@ public class ModernConfirmCommand implements CommandExecutor {
             // Start the authentication flow with changePassword enabled (registration/switching flow).
             plugin.getAuthListener().startAuthentication(player, true);
         } else if (response.equals("no")) {
-            player.sendMessage("§aNo problem! You can continue using your current login method.");
+            player.sendMessage(plugin.getMessage("noSwitch"));
         } else {
-            player.sendMessage("§eInvalid option. Please type /modernconfirm <yes|no>");
+            player.sendMessage(plugin.getMessage("invalidOption"));
         }
         return true;
     }

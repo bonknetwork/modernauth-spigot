@@ -16,7 +16,7 @@ public class ReloadCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         plugin.reloadConfig();
         plugin.loadConfiguration();
-        sender.sendMessage("§aModernAuthentication configuration reloaded.");
+        sender.sendMessage(plugin.getMessage("reloadSuccess"));
         return true;
     }
 }

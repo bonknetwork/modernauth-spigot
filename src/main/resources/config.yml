@@ -1,11 +1,27 @@
 # The URL of your authentication backend.
-backendUrl: "http://10.1.1.231"
+backendUrl: "https://auth.bonkmc.org"
 
 # The port on which your backend is running.
-backendPort: 3000
+backendPort: 443
 
 # The access code used when communicating with the backend API.
 access-code: "your_access_code_here"
 
 # The public server ID used in the link sent to players.
 server-id: "server-id-here"
+
+messages:
+  reloadSuccess: "§7------------------------------\n§aModernAuthentication configuration reloaded.\n§7------------------------------"
+  notPlayer: "§7------------------------------\nOnly players can use this command.\n§7------------------------------"
+  confirmUsage: "§7------------------------------\n§ePlease type /modernconfirm <yes|no>\n§7------------------------------"
+  noSwitch: "§7------------------------------\n§aNo problem! You can continue using your current login method.\n§7------------------------------"
+  invalidOption: "§7------------------------------\n§eInvalid option. Please type /modernconfirm <yes|no>\n§7------------------------------"
+  authSuccess: ""
+  authSuccessAfterRegister: ""
+  authFailed: "§7------------------------------\n§cAuthentication failed even after registration. Please contact a higher administrator.\n§7------------------------------"
+  registrationFailed: "§7------------------------------\n§cRegistration failed. Please contact an administrator. You have not been logged in.\n§7------------------------------"
+  tokenCreationFailed: "§7------------------------------\n§cError: Failed to initiate authentication. Please try again later.\n§7------------------------------"
+  passwordLoginDisabled: "§7------------------------------\n§cPassword login is modified for this account.\n§aClick here to login using ModernAuth.\n§7------------------------------"
+  passwordLoginDisabledHover: "Open the ModernAuth login page"
+  switchConfirmation: "§7------------------------------\n§eClick here to switch to ModernAuth\n§7------------------------------"
+  switchConfirmationHover: "Switch to ModernAuth"
