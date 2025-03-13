@@ -33,10 +33,6 @@ public final class ModernAuthentication extends JavaPlugin {
         backendPort = getConfig().getInt("backendPort", 8080);
         accessCode = getConfig().getString("access-code", "");
         serverId = getConfig().getString("server-id", "bonk-network");
-        getLogger().info("Configuration loaded: backendUrl=" + backendUrl +
-                ", backendPort=" + backendPort +
-                ", accessCode=" + accessCode +
-                ", serverId=" + serverId);
     }
 
     public String getBackendUrl() {
