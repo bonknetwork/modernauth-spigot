@@ -70,7 +70,7 @@ public class AuthTask implements Runnable {
                         boolean loggedIn = nLoginAPI.getApi().forceLogin(identity, true);
 
                         if (loggedIn) {
-                            player.sendMessage("§aAuthentication successful! You are now logged in.");
+                            player.sendMessage(plugin.getMessage("authSuccess"));
 
                             // If a password change is requested, change it asynchronously.
                             if (changePassword) {
@@ -96,14 +96,14 @@ public class AuthTask implements Runnable {
                                     Bukkit.getScheduler().runTask(plugin, () -> {
                                         boolean secondLogin = nLoginAPI.getApi().forceLogin(identity, true);
                                         if (secondLogin) {
-                                            player.sendMessage("§aAuthentication successful after registration! You are now logged in.");
+                                            player.sendMessage(plugin.getMessage("authSuccessAfterRegister"));
                                         } else {
-                                            player.sendMessage("§cAuthentication failed even after registration. Please contact an administrator.");
+                                            player.sendMessage(plugin.getMessage("authFailed"));
                                         }
                                     });
                                 } else {
                                     plugin.getLogger().warning("Failed to register player " + player.getName());
-                                    player.sendMessage("§cRegistration failed. Please contact an administrator.");
+                                    player.sendMessage(plugin.getMessage("registrationFailed"));
                                 }
                             });
                         }

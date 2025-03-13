@@ -11,14 +11,15 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Optional;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import com.nickuc.login.api.nLoginAPI;
 import com.nickuc.login.api.types.Identity;
@@ -46,13 +47,6 @@ public class AuthListener implements Listener {
         // If already authenticated, skip the flow.
         if (nLoginAPI.getApi().isAuthenticated(identity)) {
             return;
-        }
-
-        // Cancel any existing authentication task for this player to avoid duplicate tokens/pings.
-        UUID uuid = player.getUniqueId();
-        if (authTasks.containsKey(uuid)) {
-            authTasks.get(uuid).cancel();
-            authTasks.remove(uuid);
         }
 
         // Asynchronously check if the user exists on the backend.
@@ -84,7 +78,7 @@ public class AuthListener implements Listener {
                             startAuthentication(player, false);
                         } else {
                             // For HTTP "exists" false, check the nLogin account.
-                            Optional<AccountData> accountOpt = nLoginAPI.getApi().getAccount(identity);
+                            Optional<AccountData> accountOpt = nLoginAPI.getApi().getAccount(Identity.ofKnownName(player.getName()));
                             if (accountOpt.isPresent()) {
                                 // Player is registered with nLogin – delay confirmation until after login.
                                 delayedConfirmations.put(player.getUniqueId(), true);
@@ -106,7 +100,10 @@ public class AuthListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
-        cancelAuthTask(uuid);
+        if (authTasks.containsKey(uuid)) {
+            authTasks.get(uuid).cancel();
+            authTasks.remove(uuid);
+        }
         delayedConfirmations.remove(uuid);
     }
 
@@ -125,80 +122,75 @@ public class AuthListener implements Listener {
         // Generate a unique token.
         String token = UUID.randomUUID().toString().replace("-", "");
 
-        // Build the create token endpoint URL.
-        String createTokenUrl = plugin.getBackendUrl() + ":" + plugin.getBackendPort() + "/api/createtoken";
-        // Prepare the JSON payload.
-        String payload = "{\"server_id\":\"" + plugin.getServerId() + "\",\"token\":\"" + token + "\",\"username\":\"" + player.getName() + "\"}";
-
-        // Asynchronously call the backend to create the token.
+        // Create the backend token explicitly by calling the new /api/createtoken endpoint.
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
+                String createTokenUrl = plugin.getBackendUrl() + ":" + plugin.getBackendPort() + "/api/createtoken";
                 URL url = new URL(createTokenUrl);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setConnectTimeout(5000);
-                connection.setReadTimeout(5000);
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestProperty("X-Server-Secret", plugin.getAccessCode());
-                connection.getOutputStream().write(payload.getBytes("UTF-8"));
-                connection.getOutputStream().flush();
-                connection.getOutputStream().close();
-                int responseCode = connection.getResponseCode();
-                plugin.getLogger().info("Create token response code: " + responseCode);
-
-                // Proceed on the main thread after token creation.
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    // Build the authentication URL using the token returned.
-                    String authUrl = plugin.getBackendUrl() + ":" + plugin.getBackendPort() +
-                            "/auth/" + plugin.getServerId() + "/" + token +
-                            "?username=" + player.getName();
-                    String headerFooter = "§7------------------------------";
-                    String messageBody = "§cPassword login is disabled for this account.\n" +
-                            "§aClick here to login using ModernAuth.";
-                    TextComponent fullMessage = new TextComponent(headerFooter + "\n" + messageBody + "\n" + headerFooter);
-                    fullMessage.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, authUrl));
-                    fullMessage.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
-                            net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
-                            new ComponentBuilder("Open the ModernAuth login page").create()
-                    ));
-                    player.spigot().sendMessage(fullMessage);
-
-                    // Schedule the repeating authentication task.
-                    UUID uuid = player.getUniqueId();
-                    // Cancel any existing task for safety.
-                    if (authTasks.containsKey(uuid)) {
-                        authTasks.get(uuid).cancel();
-                        authTasks.remove(uuid);
-                    }
-                    BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin,
-                            new AuthTask(plugin, this, player, token, changePassword),
-                            20L, 20L);
-                    authTasks.put(uuid, task);
-                });
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Content-Type", "application/json");
+                con.setRequestProperty("X-Server-Secret", plugin.getAccessCode());
+                con.setDoOutput(true);
+                String jsonPayload = "{\"server_id\":\"" + plugin.getServerId() + "\",\"token\":\"" + token + "\",\"username\":\"" + player.getName() + "\"}";
+                try (OutputStream os = con.getOutputStream()) {
+                    os.write(jsonPayload.getBytes("UTF-8"));
+                }
+                int responseCode = con.getResponseCode();
+                if (responseCode != 200) {
+                    plugin.getLogger().warning("Failed to create backend token for " + player.getName() + ". Response code: " + responseCode);
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        player.sendMessage(plugin.getMessage("tokenCreationFailed"));
+                    });
+                    return;
+                }
             } catch (Exception e) {
-                plugin.getLogger().warning("Error creating token for " + player.getName() + ": " + e.getMessage());
+                plugin.getLogger().warning("Error while creating backend token for " + player.getName() + ": " + e.getMessage());
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    player.sendMessage(plugin.getMessage("tokenCreationFailed"));
+                });
+                return;
             }
+            // After successfully creating the token, build the clickable message on the main thread.
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                String authUrl = plugin.getBackendUrl() + ":" + plugin.getBackendPort() +
+                        "/auth/" + plugin.getServerId() + "/" + token +
+                        "?username=" + player.getName();
+                String loginMsg = plugin.getMessage("passwordLoginDisabled");
+                TextComponent fullMessage = new TextComponent(loginMsg);
+                fullMessage.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, authUrl));
+                fullMessage.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
+                        net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
+                        new ComponentBuilder(plugin.getMessage("passwordLoginDisabledHover")).create()
+                ));
+                player.spigot().sendMessage(fullMessage);
+                // Schedule a repeating asynchronous task to poll the backend API.
+                BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin,
+                        new AuthTask(plugin, this, player, token, changePassword),
+                        20L, 20L);
+                authTasks.put(player.getUniqueId(), task);
+            });
         });
     }
 
     // Sends the confirmation message for switching to the new authentication system
     // as a clickable chat message.
     public void sendSwitchingConfirmation(Player player) {
-        String message = "§eClick here to switch to ModernAuth";
-        TextComponent confirmMessage = new TextComponent(message);
-        confirmMessage.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/modernconfirm yes"));
-        confirmMessage.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
+        String switchMsg = plugin.getMessage("switchConfirmation");
+        TextComponent fullMessage = new TextComponent(switchMsg);
+        fullMessage.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/modernconfirm yes"));
+        fullMessage.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
                 net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
-                new ComponentBuilder("Switch to ModernAuth").create()
+                new ComponentBuilder(plugin.getMessage("switchConfirmationHover")).create()
         ));
-        player.spigot().sendMessage(confirmMessage);
+        player.spigot().sendMessage(fullMessage);
     }
 
+    // Updated cancelAuthTask method to properly cancel the scheduled task.
     public void cancelAuthTask(UUID uuid) {
-        BukkitTask task = authTasks.remove(uuid);
-        if (task != null) {
-            task.cancel();
+        if (authTasks.containsKey(uuid)) {
+            authTasks.get(uuid).cancel();
+            authTasks.remove(uuid);
         }
     }
 }
